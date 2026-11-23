@@ -42,6 +42,10 @@ api/fund.js       Fund due-diligence engine
 api/controls.js   Data-quality control tests
 ```
 
+## Deployment
+
+Every push to `main` deploys to production on Vercel automatically.
+
 ## Run locally
 
 ```bash
