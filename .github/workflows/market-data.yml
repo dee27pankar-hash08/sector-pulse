@@ -1,4 +1,5 @@
 name: Market data refresh
+# Requires the TIINGO_API_KEY repository secret for security prices; macro data needs no key.
 
 on:
   schedule:
