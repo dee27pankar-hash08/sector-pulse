@@ -1,56 +1,49 @@
-# Sector Pulse
+# Advisor Desk
 
-**India-first market and fund due-diligence desk.** Live at **https://sector-pulse-dusky.vercel.app**
+**A wealth management home-office toolkit, built on live market data.** Live at **https://sector-pulse-dusky.vercel.app**
 
-Built as a portfolio project for a Wealth Management Home Office role. The app does the daily work of an investment-solutions analyst: it tracks sector trends, screens and monitors mutual funds, tests data quality, logs and escalates issues, and produces a management report. All of it runs on official, free data and refreshes automatically.
+Advisor Desk does the work a wealth management home-office team does to support financial advisors: profile the client, map them to a house model, review the household portfolio, propose tax-aware trades, test the retirement plan, and hand the advisor a one-page pack for the client meeting. It covers US multi-asset portfolios (equities, bonds, real assets and cash across taxable and retirement accounts), with a separate India mutual fund research page.
 
-## What it does
+## Workflow
 
-| Tab | What you get |
-|---|---|
-| **Market Pulse** | Scorecard for 18 Nifty sectors: 1M/3M/1Y returns, relative strength vs Nifty 50, 50/200-DMA trend, volatility, drawdown, breadth, a risk-appetite read, plus an auto-drafted sector brief with a 30-second pitch |
-| **US & Macro** | S&P 500 and Nasdaq-100 (INR terms), US Treasury yield curve, USD/INR |
-| **Fund Due Diligence** | Any of ~1,400 schemes vs any of 23 benchmarks: Sharpe, Sortino, beta, Jensen's alpha, tracking error, information ratio, up/down capture, rolling 3Y returns, rule-based flags and a verdict (Retain / Watchlist / Review for replacement), a 4 Ps qualitative review and a 10-item document checklist |
-| **Monitoring** | Watchlist re-screening with verdict changes versus the previous run, surveillance alerts and one-click escalation |
-| **Controls** | 160+ automated data-quality tests (availability, timeliness, completeness, abnormal moves, corporate actions, history, proxy selection) and an escalation log with severity, owner and status |
-| **Role map** | Each job responsibility mapped to the feature that demonstrates it |
-| **Management report** | One-page summary from live data; print or save as PDF |
+| Step | Tab | What it does |
+|---|---|---|
+| 1 | **Client & risk** | Seven-question risk profile that separates *willingness* from *capacity*; the recommended model is the lower of the two. Advisor overrides require a recorded reason. |
+| 2 | **House models** | Five strategic models across 15 asset classes, back-tested since 2007 with monthly rebalancing: return, volatility, drawdown, worst 12 months, Sharpe, and stress tests (2008, Q4 2018, COVID, 2022). Optional municipal-bond sleeve for high-bracket clients. |
+| 3 | **Portfolio review** | Household holdings across taxable, IRA, 401(k) and Roth accounts vs the target model: drift, concentration, overlapping index funds, cash drag, home bias, asset location, duration risk, active-fund performance vs benchmark, risk vs profile (suitability) and stress tests in dollars. |
+| 4 | **Rebalance** | Tax-aware trade list: trades stay inside each account, retirement accounts first, taxable losses harvested before gains, new money located by tax efficiency, with estimated realized gains and federal tax. |
+| 5 | **Goal plan** | Retirement Monte Carlo (2,000 paths, 12-month block bootstrap of the model's own history, inflation and fees), probability of success, wealth bands, plan success by model, and what it takes to reach 85%. |
+| 6 | **Markets** | House view with auto-generated talking points, Fed funds, Treasury curve, real yields, inflation, unemployment, VIX, mortgage rates and asset-class performance. |
+| 7 | **Data & controls** | Daily data-quality tests with evidence and actions, plus an audit log of reviews, overrides and client packs. |
+| ⤓ | **Client review pack** | One-page summary for the advisor, printable or saved as PDF. |
 
-## Data sources
+The **India fund research** page (`/india.html`) keeps the original Indian sector scorecard, mutual fund due-diligence screen, watchlist monitoring and controls, built on official AMFI data.
 
-- **AMFI** daily NAVs: official Indian mutual fund data, including the scheme universe
-- **mfapi.in**: NAV history (AMFI mirror)
-- **US Treasury**: daily par yield curve
-- **ECB via Frankfurter**: USD/INR reference rate
+## Data
 
-Sector returns are measured through the longest-running passive index funds and ETFs that track each Nifty sector index. Unit splits are detected and adjusted automatically.
+- **Prices:** Tiingo end-of-day data for 44 securities: asset-class ETFs, common mutual funds and large-cap stocks. Total returns are rebuilt independently from prices, distributions and splits, then reconciled against the vendor's adjusted series.
+- **Macro:** straight from the publishers: US Treasury (yield curves), Federal Reserve Bank of New York (effective fed funds), Cboe (VIX), US Bureau of Labor Statistics (CPI, unemployment), Freddie Mac (mortgage rates).
+- **India page:** AMFI NAVs, US Treasury, ECB.
+
+A GitHub Actions job (`.github/workflows/market-data.yml`) runs every US trading day after the close, ready before the Mumbai morning. It extends each price history incrementally, runs the controls, and publishes `market.json` to the `data` branch. If a source fails, the previous day's data is kept and the failure appears in the controls.
 
 ## Stack
 
-Vanilla JavaScript front end with hand-built SVG charts. Node 22 serverless functions on Vercel (`/api/*`) with a 6-hour edge cache. No build step, no frameworks, no API keys.
+Static HTML and vanilla JavaScript with hand-built SVG charts. The calculation engine (`engine.js`) is pure and runs in Node or the browser. Data pipeline in Node 22 on GitHub Actions; India APIs as Vercel serverless functions. No frameworks and no API keys in the client.
 
 ```
-index.html        UI, charts, Market Pulse / US & Macro / Fund DD
-brief.js          Sector brief assistant (sector playbook + auto-draft)
-desk.js           Monitoring, Controls, Role map, document checklist, report
-api/_lib.js       Fetching, retries, split adjustment, return/risk maths
-api/_config.js    Sector proxies and benchmarks
-api/sectors.js    Sector scorecard and insights
-api/macro.js      Treasury curve and FX
-api/schemes.js    AMFI scheme universe
-api/fund.js       Fund due-diligence engine
-api/controls.js   Data-quality control tests
+index.html, advisor.js, advisor2.js   Advisor Desk UI
+engine.js                             Models, back-tests, portfolio review, rebalance, Monte Carlo
+scripts/fetch-market.mjs              Daily data pipeline and controls
+india.html, brief.js, desk.js, api/   India mutual fund research
 ```
 
 ## Deployment
 
-Every push to `main` deploys to production on Vercel automatically.
+Every push to `main` deploys to production on Vercel automatically. The market-data job needs a `TIINGO_API_KEY` repository secret.
 
-## Run locally
+## Limits
 
-```bash
-npm i -g vercel
-vercel dev
-```
+No stock-level look-through of fund holdings; tax estimates are federal, assume long-term lots and exclude the net investment income tax; fund expense ratios are not included. Sample clients are fictional.
 
 *For analysis and education only; not investment advice.*

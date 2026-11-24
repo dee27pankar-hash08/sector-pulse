@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advisor Desk · India mutual fund research</title>
+<meta name="description" content="Live Indian sector trends, US and macro context, and a fund due-diligence screen built on official AMFI NAV data.">
+<style>
+:root{
+  color-scheme:light;
+  --page:#f9f9f7; --surface:#fcfcfb; --card:#ffffff;
+  --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --pos:42,120,214; --neg:227,73,72;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --goodtext:#006300;
+  --accent:#0d366b;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19;
+    --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --pos:57,135,229; --neg:230,103,103; --goodtext:#0ca30c; --accent:#86b6ef;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--s1)}
+header{background:var(--card);border-bottom:1px solid var(--border)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0 10px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:20px;letter-spacing:-.01em}
+.brand p{margin:2px 0 0;color:var(--ink2);font-size:13px}
+.asof{font-size:12px;color:var(--ink2);text-align:right}
+.asof b{color:var(--ink)}
+nav{display:flex;gap:4px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font:inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--ink);border-bottom-color:var(--s1);font-weight:600}
+main{padding:20px 0 40px}
+.tab{display:none}.tab.on{display:block}
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:900px){.g4,.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.g2{grid-template-columns:1fr}}
+@media(max-width:560px){.g4,.g3{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.card h2{font-size:15px;margin:0 0 4px}
+.card h3{font-size:13px;margin:0 0 8px;color:var(--ink2);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.sub{color:var(--ink2);font-size:12.5px;margin:0 0 12px}
+.kpi .v{font-size:26px;font-weight:600;letter-spacing:-.02em}
+.kpi .l{color:var(--ink2);font-size:12.5px}
+.kpi .s{color:var(--ink2);font-size:12.5px;margin-top:4px}
+.up{color:var(--goodtext)} .dn{color:var(--crit)}
+.section{margin-top:16px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap}
+th{font-size:12px;color:var(--ink2);font-weight:600;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--card)}
+th:first-child,td:first-child{text-align:left}
+td:first-child{white-space:normal}
+.tblx{overflow-x:auto}
+th.sorted::after{content:" ▾";color:var(--muted)}
+th.sorted.asc::after{content:" ▴"}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:rgba(127,127,127,.06)}
+tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--s2)}
+tbody tr.sel2 td:first-child{box-shadow:inset 3px 0 0 var(--s3)}
+.tbl{overflow:auto;max-height:640px}
+.grp{color:var(--muted);font-size:11.5px;display:block}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;border:1px solid var(--border);color:var(--ink2)}
+.ins li{margin:4px 0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin-bottom:6px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);display:none;z-index:5;min-width:140px}
+.tip .r{display:flex;justify-content:space-between;gap:12px}
+.tip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink2)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--axis);border-radius:8px;padding:8px 10px}
+textarea{width:100%;min-height:64px;resize:vertical}
+button.btn{font:inherit;border:1px solid var(--s1);background:var(--s1);color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600}
+button.ghost{font:inherit;border:1px solid var(--axis);background:transparent;color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer}
+.ac{position:relative;flex:1;min-width:260px}
+.ac input{width:100%}
+.ac ul{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--card);border:1px solid var(--border);border-radius:8px;max-height:320px;overflow:auto;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,.12);display:none}
+.ac li{padding:6px 8px;border-radius:6px;cursor:pointer}
+.ac li:hover,.ac li.act{background:rgba(127,127,127,.10)}
+.ac li small{display:block;color:var(--muted)}
+.flag{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--grid)}
+.flag:last-child{border-bottom:0}
+.ic{flex:none;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+.ic.green{background:var(--good)} .ic.amber{background:var(--warn);color:#0b0b0b} .ic.red{background:var(--crit)}
+.verdict{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:99px;font-weight:600;border:1px solid var(--border)}
+.metric{padding:10px 0;border-bottom:1px solid var(--grid);display:flex;justify-content:space-between;gap:8px}
+.metric span:first-child{color:var(--ink2)}
+.metric b{font-variant-numeric:tabular-nums}
+.chk label{display:flex;gap:8px;align-items:flex-start;padding:4px 0}
+.note{font-size:12px;color:var(--ink2)}
+.err{color:var(--crit);font-size:13px}
+.skel{color:var(--muted);padding:24px 0;text-align:center}
+footer{color:var(--muted);font-size:12px;padding:20px 0 40px;border-top:1px solid var(--border)}
+.prose p{margin:6px 0}
+.prose h3{margin-top:18px}
+code{font-size:12px;background:rgba(127,127,127,.12);padding:1px 5px;border-radius:4px}
+.toggle{display:inline-flex;border:1px solid var(--axis);border-radius:8px;overflow:hidden}
+.toggle button{border:0;background:transparent;padding:5px 10px;font:inherit;font-size:12px;color:var(--ink2);cursor:pointer}
+.toggle button.on{background:var(--s1);color:#fff}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <h1><a href="/" style="color:inherit;text-decoration:none">Advisor Desk</a> <span style="font-weight:400;color:var(--ink2)">/ India mutual fund research</span></h1>
+        <p><a href="/">&larr; Back to the Advisor Desk</a> · Indian sectors and mutual funds, live from official AMFI data</p>
+      </div>
+      <div class="asof" id="asof">Loading market data…</div>
+    </div>
+    <nav id="nav">
+      <button data-t="pulse" class="on">Market Pulse</button>
+      <button data-t="macro">US &amp; Macro</button>
+      <button data-t="dd">Fund Due Diligence</button>
+      <button data-t="method">Methodology</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ================= MARKET PULSE ================= -->
+  <section class="tab on" id="t-pulse">
+    <div class="grid g4" id="kpis"><div class="card skel">Loading…</div><div class="card skel">…</div><div class="card skel">…</div><div class="card skel">…</div></div>
+
+    <div class="grid g2 section">
+      <div class="card">
+        <h2>What the data says</h2>
+        <p class="sub">Auto-generated from relative strength, trend and breadth. A starting point for analysis, not a conclusion.</p>
+        <ul class="ins" id="insights"><li class="muted">Loading…</li></ul>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <div><h2 style="margin:0">1-year performance, rebased to 100</h2><p class="sub" style="margin:2px 0 8px">Click up to two sectors in the table to compare against the Nifty 50.</p></div>
+        </div>
+        <div class="legend" id="pulseLegend"></div>
+        <div class="chart" id="pulseChart"></div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div><h2 style="margin:0">Sector scorecard</h2><p class="sub" style="margin:2px 0 0">Returns of each NSE sector index, measured via its longest-running passive tracker. Click a column to sort; click a row to chart it.</p></div>
+        <div class="toggle" id="colorMode"><button data-m="abs" class="on">Absolute</button><button data-m="rel">vs Nifty 50</button></div>
+      </div>
+      <div class="tbl"><table id="sectorTable"><thead></thead><tbody><tr><td colspan="12" class="skel">Loading…</td></tr></tbody></table></div>
+      <p class="note" style="margin-top:8px">Shading: blue = positive, red = negative, stronger = larger move. "vs Nifty 50" shades each return by its gap to the benchmark over the same period. Trend: price vs its 50- and 200-day moving averages.</p>
+    </div>
+
+    <div class="card section" id="brief">
+      <h2>Sector brief assistant</h2>
+      <p class="sub">Click any sector in the scorecard. The assistant drafts a stance, the fundamental drivers, the risks, what would change the view, a 30-second pitch and likely follow-up questions.</p>
+      <div id="briefBody" class="muted">Select a sector in the scorecard.</div>
+    </div>
+  </section>
+
+  <!-- ================= US & MACRO ================= -->
+  <section class="tab" id="t-macro">
+    <div class="grid g3" id="macroKpis"><div class="card skel">Loading…</div><div class="card skel">…</div><div class="card skel">…</div></div>
+    <div class="grid g2 section">
+      <div class="card">
+        <h2>US equities as an Indian investor holds them</h2>
+        <p class="sub">Measured through Indian index funds investing in the S&amp;P 500 and Nasdaq 100, so returns are in rupees and include currency moves. USD returns are backed out using the USD/INR change.</p>
+        <div id="usTable" class="tblx"></div>
+        <div class="legend section" id="usLegend"></div>
+        <div class="chart" id="usChart"></div>
+      </div>
+      <div class="card">
+        <h2>US Treasury yields</h2>
+        <p class="sub">Daily par yields from the US Treasury. The 10Y–2Y spread is the classic recession and curve-shape signal.</p>
+        <div class="legend" id="tsyLegend"></div>
+        <div class="chart" id="tsyChart"></div>
+        <div id="tsyTable" class="section tblx"></div>
+      </div>
+    </div>
+    <div class="card section">
+      <h2>USD/INR</h2>
+      <p class="sub">ECB reference rate. A weaker rupee raises the INR value of overseas holdings, so it matters for clients' global allocation and for IT and pharma exporters' earnings.</p>
+      <div class="chart" id="fxChart"></div>
+    </div>
+  </section>
+
+  <!-- ================= FUND DUE DILIGENCE ================= -->
+  <section class="tab" id="t-dd">
+    <div class="card">
+      <h2>Fund due-diligence screen</h2>
+      <p class="sub">The quantitative half of a manager review: consistency, risk-adjusted return, downside behaviour and closet-indexing checks against a benchmark. The qualitative half (people, philosophy, process, operations) is the checklist below the results.</p>
+      <div class="row">
+        <div class="ac">
+          <label class="f">Scheme (any open-ended equity, hybrid, index or FoF scheme, Direct-Growth)
+            <input id="q" placeholder="Search e.g. Parag Parikh Flexi Cap, HDFC Mid Cap…" autocomplete="off">
+          </label>
+          <ul id="acList"></ul>
+        </div>
+        <label class="f">Benchmark
+          <select id="bench"><option value="">Auto (by category)</option></select>
+        </label>
+        <label class="f">Risk-free rate %
+          <input id="rf" type="number" step="0.1" value="6.5" style="width:90px">
+        </label>
+        <button class="btn" id="go">Analyse</button>
+      </div>
+      <p class="note" id="schemeStatus" style="margin:8px 0 0">Loading scheme list from AMFI…</p>
+      <div class="row" style="margin-top:8px;gap:6px" id="examples"></div>
+    </div>
+    <div id="ddOut"></div>
+  </section>
+
+  <!-- ================= METHODOLOGY ================= -->
+  <section class="tab" id="t-method">
+    <div class="card prose">
+      <h2>Methodology, sources &amp; limitations</h2>
+      <h3>Data sources (all free and official, refreshed daily)</h3>
+      <p><b>AMFI</b> (Association of Mutual Funds in India): the official daily NAV file for every scheme. It powers the scheme search and latest NAVs.</p>
+      <p><b>NAV history</b>: full daily NAV history per scheme from <code>api.mfapi.in</code>, a public mirror of AMFI's historical NAV data.</p>
+      <p><b>US Treasury</b>: daily par yield curve rates (3M, 2Y, 10Y).</p>
+      <p><b>ECB reference rates</b> (via Frankfurter): daily USD/INR.</p>
+      <p>Server responses are cached for up to 6 hours. NAVs are published once per business day, so figures reflect the latest published NAV date shown at the top.</p>
+      <h3>Why sector index funds instead of index levels?</h3>
+      <p>NSE's own index feeds block automated access from cloud servers. Instead, each sector is measured through the longest-running <b>passive fund or ETF tracking that exact Nifty sector index</b>, using AMFI's official NAVs. These track the index closely; the gap is roughly the fund's expense ratio (typically 0.1–0.5% a year) plus small tracking error. Each row shows the proxy used. Unit splits in ETF NAV histories are detected and adjusted automatically.</p>
+      <h3>Market Pulse definitions</h3>
+      <p><b>Returns</b>: point-to-point NAV change over 7, 30, 91, 182 and 365 calendar days; YTD from the last NAV of the previous year. <b>3Y CAGR</b>: (end ÷ start)^(1/3) − 1.</p>
+      <p><b>RS 3M</b> (relative strength): sector 3-month return minus Nifty 50 3-month return. <b>Breadth</b>: share of sectors trading above their 200-day moving average. <b>Risk appetite</b>: average of Midcap 150 and Smallcap 250 3-month returns minus Nifty 50 (above +2pp = risk-on, below −2pp = risk-off).</p>
+      <p><b>Trend</b>: Uptrend if price &gt; 50-DMA &gt; 200-DMA; Downtrend if price &lt; 50-DMA &lt; 200-DMA; otherwise Mixed. <b>Vol 1Y</b>: annualised standard deviation of daily returns. <b>Max DD 1Y</b>: largest peak-to-trough fall in the last year.</p>
+      <h3>Fund due-diligence definitions (window: last 3 years, or full history if shorter)</h3>
+      <p><b>Sharpe</b> = (CAGR − risk-free) ÷ annualised volatility. <b>Sortino</b> uses downside deviation below the risk-free rate. <b>Beta</b> = cov(fund, bench) ÷ var(bench) on daily returns. <b>Jensen's alpha</b> = CAGR − [rf + β × (bench CAGR − rf)].</p>
+      <p><b>Tracking error</b> = annualised stdev of daily (fund − bench) returns. <b>Information ratio</b> = (fund CAGR − bench CAGR) ÷ tracking error.</p>
+      <p><b>Up / down capture</b>: geometric average fund return in months when the benchmark rose (fell), divided by the benchmark's. Ideal: up &gt; 100%, down &lt; 100%. <b>Batting average</b>: share of months the fund beat the benchmark.</p>
+      <p><b>Rolling returns</b>: 3-year CAGR measured from every week in the history (1-year if under 4 years of data). This removes the end-point bias of a single trailing return.</p>
+      <p><b>Flags and verdict</b>: rule-based thresholds (e.g. rolling beat rate under 40% = red, information ratio under 0 = red, down capture over 110% = red). Two or more reds = "Review for replacement"; one red or two ambers = "Watchlist"; otherwise "Retain". This is only the quantitative screen. A real review also covers the 4 Ps and operational due diligence.</p>
+      <h3>Limitations</h3>
+      <p>Benchmarks are price-return proxies via passive funds, not official TRI series, so they carry a small expense drag that slightly flatters active funds. Multi-cap and flexi-cap funds would ideally be measured against the Nifty 500 TRI; choose the closest benchmark manually. Past performance does not guarantee future results. This is an analytical tool, not investment advice.</p>
+    </div>
+  </section>
+</main>
+<footer class="wrap">Built by Deepankar as a research &amp; due-diligence portfolio project · Data: AMFI, US Treasury, ECB · For analysis only, not investment advice.</footer>
+
+<script>
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const pct = (x, d = 1) => x === null || x === undefined || !isFinite(x) ? '–' : (x > 0 ? '+' : '') + (x * 100).toFixed(d) + '%';
+const pctu = (x, d = 1) => x === null || x === undefined || !isFinite(x) ? '–' : (x * 100).toFixed(d) + '%';
+const num = (x, d = 2) => x === null || x === undefined || !isFinite(x) ? '–' : x.toFixed(d);
+const dstr = t => t ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '–';
+const cls = x => x > 0 ? 'up' : x < 0 ? 'dn' : '';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+async function getJSON(u) { const r = await fetch(u); const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status)); return j; }
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+
+// tabs
+document.querySelectorAll('#nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.id === 't-' + b.dataset.t));
+  if (b.dataset.t === 'macro') loadMacro();
+  if (b.dataset.t === 'dd') loadSchemes();
+  redrawAll();
+});
+
+// ---------- SVG line chart with crosshair tooltip and end labels ----------
+const charts = [];
+function lineChart(el, opts) {
+  const spec = { el, opts }; charts.push(spec); drawChart(spec); return spec;
+}
+function redrawAll() { charts.forEach(drawChart); }
+window.addEventListener('resize', () => { clearTimeout(window.__rz); window.__rz = setTimeout(redrawAll, 150); });
+function drawChart(spec) {
+  const { el, opts } = spec;
+  const W = el.clientWidth || 600; if (!el.offsetParent) return;
+  const H = opts.height || 280, m = { t: 10, r: opts.endLabels === false ? 16 : 92, b: 26, l: 46 };
+  const series = opts.series.filter(s => s.pts && s.pts.length);
+  if (!series.length) { el.innerHTML = '<div class="skel">No data</div>'; return; }
+  const all = series.flatMap(s => s.pts);
+  const x0 = Math.min(...all.map(p => p[0])), x1 = Math.max(...all.map(p => p[0]));
+  let y0 = Math.min(...all.map(p => p[1])), y1 = Math.max(...all.map(p => p[1]));
+  if (opts.zero) { y0 = Math.min(0, y0); y1 = Math.max(0, y1); }
+  const pad = (y1 - y0) * 0.08 || 1; y0 -= pad; y1 += pad;
+  const X = t => m.l + (t - x0) / (x1 - x0 || 1) * (W - m.l - m.r);
+  const Y = v => m.t + (1 - (v - y0) / (y1 - y0)) * (H - m.t - m.b);
+  const yfmt = opts.yFmt || (v => v.toFixed(0));
+  // ticks
+  const nice = (lo, hi, n) => { const span = hi - lo, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0))); const st = [1, 2, 2.5, 5, 10].map(k => k * mag).find(k => span / k <= n) || mag * 10; const out = []; for (let v = Math.ceil(lo / st) * st; v <= hi; v += st) out.push(+v.toFixed(10)); return out; };
+  const yt = nice(y0, y1, 5);
+  const xt = []; { const d0 = new Date(x0); let d = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + 1, 1); const months = (x1 - x0) / 2.63e9; const stepM = months > 30 ? 6 : months > 14 ? 3 : months > 6 ? 2 : 1; while (d <= x1) { const dd = new Date(d); if (dd.getUTCMonth() % stepM === 0) xt.push(d); d = Date.UTC(dd.getUTCFullYear(), dd.getUTCMonth() + 1, 1); } }
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || 'chart')}">`;
+  yt.forEach(v => { s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)" stroke-width="1"/><text x="${m.l - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${yfmt(v)}</text>`; });
+  if (opts.baseline !== undefined && opts.baseline >= y0 && opts.baseline <= y1) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(opts.baseline)}" y2="${Y(opts.baseline)}" stroke="var(--axis)" stroke-width="1"/>`;
+  xt.forEach(t => { s += `<text x="${X(t)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="var(--muted)">${new Date(t).toLocaleDateString('en-GB', { month: 'short', year: '2-digit', timeZone: 'UTC' })}</text>`; });
+  series.forEach(se => { const d = se.pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(''); s += `<path d="${d}" fill="none" stroke="${se.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`; });
+  // end labels (de-collided)
+  if (opts.endLabels !== false) {
+    const labs = series.map(se => { const p = se.pts[se.pts.length - 1]; return { y: Y(p[1]), x: X(p[0]), txt: se.name.length > 14 ? se.name.slice(0, 13) + '…' : se.name, val: yfmt(p[1]), color: se.color }; }).sort((a, b) => a.y - b.y);
+    for (let i = 1; i < labs.length; i++) if (labs[i].y - labs[i - 1].y < 26) labs[i].y = labs[i - 1].y + 26;
+    labs.forEach(l => { s += `<text x="${W - m.r + 8}" y="${l.y}" font-size="11" fill="var(--ink2)">${esc(l.txt)}</text><text x="${W - m.r + 8}" y="${l.y + 12}" font-size="11" font-weight="600" fill="var(--ink)">${l.val}</text>`; });
+  }
+  s += `<line id="xh" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" stroke="var(--axis)" stroke-width="1" visibility="hidden"/>`;
+  series.forEach((se, i) => { s += `<circle class="dot" data-i="${i}" r="4" fill="${se.color}" stroke="var(--card)" stroke-width="2" visibility="hidden"/>`; });
+  s += `<rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/></svg><div class="tip"></div>`;
+  el.innerHTML = s;
+  const svg = el.querySelector('svg'), tip = el.querySelector('.tip'), xh = svg.querySelector('#xh'), dots = svg.querySelectorAll('.dot');
+  const near = (pts, t) => { let lo = 0, hi = pts.length - 1; while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (pts[mid][0] < t) lo = mid; else hi = mid; } return Math.abs(pts[lo][0] - t) < Math.abs(pts[hi][0] - t) ? pts[lo] : pts[hi]; };
+  svg.addEventListener('mousemove', ev => {
+    const r = svg.getBoundingClientRect(), sx = (ev.clientX - r.left) * W / r.width;
+    if (sx < m.l || sx > W - m.r) { hide(); return; }
+    const t = x0 + (sx - m.l) / (W - m.l - m.r) * (x1 - x0);
+    const ref = near(series[0].pts, t);
+    xh.setAttribute('x1', X(ref[0])); xh.setAttribute('x2', X(ref[0])); xh.setAttribute('visibility', 'visible');
+    let html = `<div class="muted" style="margin-bottom:4px">${dstr(ref[0])}</div>`;
+    series.forEach((se, i) => { const p = near(se.pts, ref[0]); dots[i].setAttribute('cx', X(p[0])); dots[i].setAttribute('cy', Y(p[1])); dots[i].setAttribute('visibility', 'visible'); html += `<div class="r"><span><i style="background:${se.color}"></i>${esc(se.name)}</span><b>${yfmt(p[1])}</b></div>`; });
+    tip.innerHTML = html; tip.style.display = 'block';
+    const px = (X(ref[0]) / W) * r.width; tip.style.left = Math.min(px + 14, r.width - tip.offsetWidth - 4) + 'px'; tip.style.top = '8px';
+  });
+  const hide = () => { xh.setAttribute('visibility', 'hidden'); dots.forEach(d => d.setAttribute('visibility', 'hidden')); tip.style.display = 'none'; };
+  svg.addEventListener('mouseleave', hide);
+}
+function legend(el, series) { el.innerHTML = series.filter(s => s.pts && s.pts.length).map(s => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join(''); }
+
+// ---------- MARKET PULSE ----------
+let SECP = null, SEC = null, sortKey = 'rs3m', sortAsc = false, colorMode = 'abs', selected = [];
+const COLS = [
+  { k: 'label', t: 'Sector' }, { k: 'r1w', t: '1W' }, { k: 'r1m', t: '1M' }, { k: 'r3m', t: '3M' }, { k: 'r6m', t: '6M' }, { k: 'ytd', t: 'YTD' }, { k: 'r1y', t: '1Y' },
+  { k: 'rs3m', t: 'RS 3M vs Nifty' }, { k: 'vol1y', t: 'Vol 1Y' }, { k: 'mdd1y', t: 'Max DD 1Y' }, { k: 'offHigh', t: 'From 52W high' }, { k: 'trend', t: 'Trend' }
+];
+const CAP = { r1w: .05, r1m: .10, r3m: .15, r6m: .20, ytd: .30, r1y: .35, rs3m: .10 };
+function shade(v, cap) { if (v === null || v === undefined) return ''; const a = Math.min(1, Math.abs(v) / cap) * 0.42; return `background:rgba(${v >= 0 ? css('--pos') : css('--neg')},${a.toFixed(3)})`; }
+
+async function loadPulse() {
+  try {
+    SEC = await (SECP = getJSON('/api/sectors'));
+    $('#asof').innerHTML = `NAV data as of <b>${dstr(SEC.asOf)}</b><br>Source: AMFI · refreshed ${new Date(SEC.generatedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}`;
+    renderKpis(); renderInsights(); renderTable();
+    const lead = SEC.insights.leaders[0]; const leadRow = lead && SEC.sectors.find(s => s.label === lead.label);
+    selected = leadRow ? [leadRow.key] : []; renderTable(); renderPulseChart(); renderBrief();
+  } catch (e) {
+    $('#asof').innerHTML = `<span class="err">Could not load market data: ${esc(e.message)}</span>`;
+    $('#kpis').innerHTML = `<div class="card err">Market data is temporarily unavailable. Please refresh in a minute.</div>`;
+  }
+}
+function renderKpis() {
+  const b = SEC.benchmark, I = SEC.insights;
+  const ra = I.riskAppetite;
+  const lead = I.leaders[0], lag = I.laggards[0];
+  $('#kpis').innerHTML = `
+  <div class="card kpi"><div class="l">Nifty 50 · 3M</div><div class="v ${cls(b.r3m)}">${pct(b.r3m)}</div><div class="s">1M ${pct(b.r1m)} · 1Y ${pct(b.r1y)} · ${esc(b.trend)}</div></div>
+  <div class="card kpi"><div class="l">Breadth · sectors above 200-DMA</div><div class="v">${I.breadthCount}/${I.breadthTotal}</div><div class="s">${I.breadth >= .6 ? 'Broad participation' : I.breadth <= .4 ? 'Narrow / weak market' : 'Mixed participation'}</div></div>
+  <div class="card kpi"><div class="l">Risk appetite · Mid &amp; Small vs Nifty (3M)</div><div class="v">${ra ? esc(ra.label) : '–'}</div><div class="s">${ra ? 'Spread ' + pct(ra.spread) : ''}</div></div>
+  <div class="card kpi"><div class="l">3M leader / laggard vs Nifty</div><div class="v" style="font-size:20px">${lead ? esc(lead.label) : '–'}</div><div class="s"><span class="up">${lead ? pct(lead.rs3m) : ''}</span> · laggard ${lag ? esc(lag.label) + ' <span class="dn">' + pct(lag.rs3m) + '</span>' : '–'}</div></div>`;
+}
+function renderInsights() {
+  const I = SEC.insights, b = SEC.benchmark, out = [];
+  if (I.leaders.length) out.push(`<b>Leadership:</b> over the last 3 months, ${I.leaders.map(l => `${esc(l.label)} (${pct(l.rs3m)} vs Nifty)`).join(', ')} have outperformed the most.`);
+  if (I.laggards.length) out.push(`<b>Laggards:</b> ${I.laggards.map(l => `${esc(l.label)} (${pct(l.rs3m)})`).join(', ')}.`);
+  if (I.breadth !== null) out.push(`<b>Breadth:</b> ${I.breadthCount} of ${I.breadthTotal} sectors are above their 200-day average${I.breadth >= .6 ? ', a broad-based market.' : I.breadth <= .4 ? ', so the rally (if any) is narrow and fragile.' : ', a mixed picture.'}`);
+  if (I.riskAppetite) out.push(`<b>Risk appetite:</b> mid and small caps are ${I.riskAppetite.spread >= 0 ? 'ahead of' : 'behind'} the Nifty 50 by ${pctu(Math.abs(I.riskAppetite.spread))} over 3 months (<em>${esc(I.riskAppetite.label)}</em>).`);
+  if (I.emerging.length) out.push(`<b>Turning up:</b> ${I.emerging.map(esc).join(', ')}: beating the Nifty over 1 month despite lagging over 1 year. Possible rotation candidates worth researching.`);
+  if (I.fading.length) out.push(`<b>Losing steam:</b> ${I.fading.map(esc).join(', ')}: 1-year leaders now lagging over the last month.`);
+  out.push(`<b>Benchmark:</b> Nifty 50 is ${pct(b.offHigh)} from its 52-week high with 1-year volatility of ${pctu(b.vol1y)}.`);
+  $('#insights').innerHTML = out.map(x => `<li>${x}</li>`).join('');
+}
+function renderTable() {
+  const rows = SEC.sectors.filter(r => !r.error);
+  const val = r => r[sortKey];
+  rows.sort((a, b) => { const x = val(a), y = val(b); if (x === null || x === undefined) return 1; if (y === null || y === undefined) return -1; if (typeof x === 'string') return sortAsc ? x.localeCompare(y) : y.localeCompare(x); return sortAsc ? x - y : y - x; });
+  const B = SEC.benchmark;
+  $('#sectorTable thead').innerHTML = '<tr>' + COLS.map(c => `<th data-k="${c.k}" class="${c.k === sortKey ? 'sorted' + (sortAsc ? ' asc' : '') : ''}">${c.t}</th>`).join('') + '</tr>';
+  const cell = (r, k) => {
+    const v = r[k];
+    if (k === 'label') return `<td>${esc(r.label)}<span class="grp">${esc(r.group)}</span></td>`;
+    if (k === 'trend') return `<td><span class="pill">${r.trend === 'Uptrend' ? '▲ ' : r.trend === 'Downtrend' ? '▼ ' : '◆ '}${esc(r.trend)}</span></td>`;
+    if (k === 'vol1y') return `<td>${pctu(v)}</td>`;
+    if (k === 'mdd1y' || k === 'offHigh') return `<td>${pct(v)}</td>`;
+    const sv = colorMode === 'rel' && k !== 'rs3m' && B[k] !== null && v !== null ? v - B[k] : v;
+    return `<td style="${shade(sv, CAP[k] || .2)}" title="${colorMode === 'rel' && k !== 'rs3m' ? 'vs Nifty: ' + pct(sv) : ''}">${pct(v)}</td>`;
+  };
+  const benchRow = `<tr style="cursor:default"><td><b>Nifty 50</b><span class="grp">Benchmark</span></td>${COLS.slice(1).map(c => c.k === 'trend' ? `<td><span class="pill">${esc(B.trend)}</span></td>` : c.k === 'vol1y' ? `<td>${pctu(B.vol1y)}</td>` : c.k === 'rs3m' ? '<td>–</td>' : `<td><b>${pct(B[c.k])}</b></td>`).join('')}</tr>`;
+  $('#sectorTable tbody').innerHTML = benchRow + rows.map(r => `<tr data-k="${r.key}" class="${selected[0] === r.key ? 'sel' : selected[1] === r.key ? 'sel2' : ''}" title="Proxy: ${esc(r.proxy)} (data from ${dstr(r.historyFrom)})">${COLS.map(c => cell(r, c.k)).join('')}</tr>`).join('');
+  document.querySelectorAll('#sectorTable th').forEach(th => th.onclick = () => { const k = th.dataset.k; if (sortKey === k) sortAsc = !sortAsc; else { sortKey = k; sortAsc = k === 'label'; } renderTable(); });
+  document.querySelectorAll('#sectorTable tbody tr[data-k]').forEach(tr => tr.onclick = () => {
+    const k = tr.dataset.k;
+    if (selected.includes(k)) selected = selected.filter(x => x !== k); else { selected.push(k); if (selected.length > 2) selected.shift(); }
+    renderTable(); renderPulseChart(); renderBrief();
+  });
+}
+let pulseSpec = null;
+function renderPulseChart() {
+  const colors = [css('--s2'), css('--s3')];
+  const series = [{ name: 'Nifty 50', color: css('--s1'), pts: SEC.benchmark.chart }].concat(selected.map((k, i) => { const r = SEC.sectors.find(s => s.key === k); return { name: r.label, color: colors[i], pts: r.chart }; }));
+  legend($('#pulseLegend'), series);
+  const opts = { series, label: 'Sector performance vs Nifty 50, rebased to 100', yFmt: v => v.toFixed(0), baseline: 100 };
+  if (pulseSpec) { pulseSpec.opts = opts; drawChart(pulseSpec); } else pulseSpec = lineChart($('#pulseChart'), opts);
+}
+document.querySelectorAll('#colorMode button').forEach(b => b.onclick = () => { colorMode = b.dataset.m; document.querySelectorAll('#colorMode button').forEach(x => x.classList.toggle('on', x === b)); renderTable(); });
+
+function renderBrief() {
+  const k = selected[selected.length - 1];
+  if (!k) { $('#briefBody').innerHTML = '<span class="muted">Select a sector in the scorecard.</span>'; return; }
+  const r = SEC.sectors.find(s => s.key === k), B = SEC.benchmark;
+  const rank = [...SEC.sectors].filter(s => s.rs3m !== null).sort((a, b) => b.rs3m - a.rs3m).findIndex(s => s.key === k) + 1;
+  const total = SEC.sectors.filter(s => s.rs3m !== null).length;
+  const facts = `Nifty ${r.label} has returned ${pct(r.r3m)} over 3 months and ${pct(r.r1y)} over 1 year, versus ${pct(B.r3m)} and ${pct(B.r1y)} for the Nifty 50. That is ${pct(r.rs3m)} relative strength over 3 months (rank ${rank} of ${total} sectors). It is in a${r.trend === 'Uptrend' ? 'n uptrend' : r.trend === 'Downtrend' ? ' downtrend' : ' mixed trend'} (price ${r.above50 ? 'above' : 'below'} its 50-DMA and ${r.above200 ? 'above' : 'below'} its 200-DMA), ${pct(r.offHigh)} from its 52-week high. Over the past year its volatility was ${pctu(r.vol1y)} with a maximum drawdown of ${pct(r.mdd1y)}.`;
+  const saved = store.get('brief-' + k, { why: '', risks: '', change: '', stance: 'Neutral' });
+  $('#briefBody').innerHTML = `
+    <div class="row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">${esc(r.label)} · data as of ${dstr(r.asOf)}</h3>
+    <label class="f" style="flex-direction:row;align-items:center;gap:8px">My stance <select id="bStance">${['Overweight', 'Neutral', 'Underweight'].map(s => `<option ${saved.stance === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label></div>
+    <p style="margin:10px 0">${esc(facts)}</p>
+    <div class="grid g3">
+      <label class="f">Why: fundamental drivers (earnings, policy, rates, demand)<textarea id="bWhy" placeholder="e.g. Credit growth steady, NIMs stabilising as rate cuts are passed through…">${esc(saved.why)}</textarea></label>
+      <label class="f">Key risks<textarea id="bRisks" placeholder="e.g. Asset-quality stress in unsecured loans…">${esc(saved.risks)}</textarea></label>
+      <label class="f">What would change my view<textarea id="bChange" placeholder="e.g. Two quarters of slowing deposit growth…">${esc(saved.change)}</textarea></label>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="ghost" id="bCopy">Copy brief</button><span class="note" id="bMsg"></span></div>
+    <p class="note">Proxy: ${esc(r.proxy)} (AMFI code ${esc(r.proxyCode)}). Your notes are saved in this browser only.</p>`;
+  const save = () => store.set('brief-' + k, { why: $('#bWhy').value, risks: $('#bRisks').value, change: $('#bChange').value, stance: $('#bStance').value });
+  ['#bWhy', '#bRisks', '#bChange', '#bStance'].forEach(id => $(id).addEventListener('input', save));
+  $('#bCopy').onclick = async () => {
+    save();
+    const txt = `SECTOR BRIEF: Nifty ${r.label} (${$('#bStance').value})\nData as of ${dstr(r.asOf)} | Source: AMFI NAVs via passive index tracker\n\nWhat the numbers say:\n${facts}\n\nWhy:\n${$('#bWhy').value || '-'}\n\nKey risks:\n${$('#bRisks').value || '-'}\n\nWhat would change my view:\n${$('#bChange').value || '-'}\n`;
+    try { await navigator.clipboard.writeText(txt); $('#bMsg').textContent = 'Copied to clipboard.'; } catch (e) { $('#bMsg').textContent = 'Copy failed. Select the text manually.'; }
+  };
+}
+
+// ---------- US & MACRO ----------
+let MAC = null, macroLoaded = false;
+async function loadMacro() {
+  if (macroLoaded) return; macroLoaded = true;
+  try {
+    MAC = await getJSON('/api/macro');
+    try { if (SECP) await SECP; } catch (e) {}
+    const fx = MAC.fx, ts = MAC.treasury;
+    const sp = SEC && SEC.us.find(u => u.key === 'sp500'), nd = SEC && SEC.us.find(u => u.key === 'ndx');
+    const usd = (rInr, fxc) => rInr === null || fxc === null || fxc === undefined ? null : (1 + rInr) / (1 + fxc) - 1;
+    $('#macroKpis').innerHTML = `
+      <div class="card kpi"><div class="l">USD/INR</div><div class="v">${fx.error ? '–' : fx.latest.toFixed(2)}</div><div class="s">${fx.error ? esc(fx.error) : `1M ${pct(fx.chg1m)} · 1Y ${pct(fx.chg1y)} · as of ${dstr(fx.asOf)}`}</div></div>
+      <div class="card kpi"><div class="l">US 10Y Treasury yield</div><div class="v">${ts.error ? '–' : ts.latest.y10.toFixed(2) + '%'}</div><div class="s">${ts.error ? esc(ts.error) : `${(ts.latest.y10 - ts.yearAgo.y10 >= 0 ? '+' : '') + (ts.latest.y10 - ts.yearAgo.y10).toFixed(2)}pp vs 1 year ago · as of ${dstr(ts.asOf)}`}</div></div>
+      <div class="card kpi"><div class="l">US curve · 10Y minus 2Y</div><div class="v">${ts.error ? '–' : (ts.latest.spread10_2 >= 0 ? '+' : '') + ts.latest.spread10_2.toFixed(2) + 'pp'}</div><div class="s">${ts.error ? '' : ts.latest.spread10_2 < 0 ? 'Inverted: historically a recession warning' : 'Positively sloped'}${ts.error ? '' : ` · 1Y ago ${(ts.yearAgo.spread10_2 >= 0 ? '+' : '') + ts.yearAgo.spread10_2.toFixed(2)}pp`}</div></div>`;
+    if (sp || nd) {
+      const rows = [sp, nd].filter(Boolean).filter(r => !r.error);
+      $('#usTable').innerHTML = `<table><thead><tr><th>Index</th><th>3M INR</th><th>1Y INR</th><th>1Y USD est.</th><th>FX effect</th></tr></thead><tbody>${rows.map(r => { const u = usd(r.r1y, fx.error ? null : fx.chg1y); return `<tr style="cursor:default"><td title="Proxy: ${esc(r.proxy)}">${esc(r.label.replace(' (in INR)', ''))}</td><td>${pct(r.r3m)}</td><td>${pct(r.r1y)}</td><td>${pct(u)}</td><td>${u === null ? '–' : pct(r.r1y - u)}</td></tr>`; }).join('')}</tbody></table>`;
+      const series = [{ name: 'Nifty 50', color: css('--s1'), pts: SEC.benchmark.chart }].concat(rows.map((r, i) => ({ name: r.label.replace(' (in INR)', ''), color: [css('--s2'), css('--s3')][i], pts: r.chart })));
+      legend($('#usLegend'), series);
+      lineChart($('#usChart'), { series, label: 'US vs India, rebased to 100, INR', baseline: 100, height: 240 });
+    }
+    if (!ts.error) {
+      const series = [{ name: '2Y', color: css('--s1'), pts: ts.chart.map(r => [r[0], r[1]]) }, { name: '10Y', color: css('--s2'), pts: ts.chart.map(r => [r[0], r[2]]) }];
+      legend($('#tsyLegend'), series);
+      lineChart($('#tsyChart'), { series, label: 'US Treasury yields', yFmt: v => v.toFixed(2) + '%', height: 240 });
+      $('#tsyTable').innerHTML = `<table><thead><tr><th>Tenor</th><th>Latest</th><th>1 year ago</th><th>Change</th></tr></thead><tbody>${[['3M', 'y3m'], ['2Y', 'y2'], ['10Y', 'y10'], ['10Y–2Y', 'spread10_2']].map(([l, k]) => `<tr style="cursor:default"><td>${l}</td><td>${ts.latest[k].toFixed(2)}%</td><td>${ts.yearAgo[k].toFixed(2)}%</td><td>${(ts.latest[k] - ts.yearAgo[k] >= 0 ? '+' : '') + (ts.latest[k] - ts.yearAgo[k]).toFixed(2)}pp</td></tr>`).join('')}</tbody></table><p class="note">Source: ${esc(ts.source)}</p>`;
+    }
+    if (!fx.error) lineChart($('#fxChart'), { series: [{ name: 'USD/INR', color: css('--s1'), pts: fx.chart }], label: 'USD/INR', yFmt: v => v.toFixed(1), height: 220 });
+  } catch (e) { $('#macroKpis').innerHTML = `<div class="card err">Macro data unavailable: ${esc(e.message)}</div>`; macroLoaded = false; }
+}
+
+// ---------- FUND DUE DILIGENCE ----------
+let SCH = null, schLoading = false, pick = null;
+async function loadSchemes() {
+  if (SCH || schLoading) return; schLoading = true;
+  try {
+    const j = await getJSON('/api/schemes');
+    SCH = j.schemes.map(s => ({ code: s[0], name: s[1], cat: s[2], amc: s[3], nav: s[4], d: s[5], lc: (s[1] + ' ' + s[3]).toLowerCase() }));
+    $('#schemeStatus').textContent = `${SCH.length.toLocaleString()} active schemes loaded from AMFI (NAV date ${dstr(Math.max(...SCH.map(s => s.d)))}).`;
+    const ex = ['Parag Parikh Flexi Cap', 'HDFC Mid Cap', 'Nippon India Small Cap', 'ICICI Prudential Large Cap', 'SBI Banking & Financial'];
+    $('#examples').innerHTML = '<span class="note">Try:</span>' + ex.map(e => { const s = SCH.find(x => x.lc.includes(e.toLowerCase().split(' ').slice(0, 3).join(' '))); return s ? `<button class="ghost" data-c="${s.code}">${esc(e)}</button>` : ''; }).join('');
+    document.querySelectorAll('#examples button').forEach(b => b.onclick = () => { pick = SCH.find(s => s.code === b.dataset.c); $('#q').value = pick.name; analyse(); });
+    const p = new URLSearchParams(location.search).get('fund'); if (p) { pick = SCH.find(s => s.code === p); if (pick) { $('#q').value = pick.name; analyse(); } }
+  } catch (e) { $('#schemeStatus').innerHTML = `<span class="err">Could not load scheme list: ${esc(e.message)}</span>`; schLoading = false; }
+}
+let acIdx = -1, acItems = [];
+$('#q').addEventListener('input', () => {
+  pick = null; const q = $('#q').value.toLowerCase().trim(); const ul = $('#acList');
+  if (!SCH || q.length < 2) { ul.style.display = 'none'; return; }
+  const terms = q.split(/\s+/);
+  acItems = SCH.filter(s => terms.every(t => s.lc.includes(t))).slice(0, 30); acIdx = -1;
+  ul.innerHTML = acItems.length ? acItems.map((s, i) => `<li data-i="${i}">${esc(s.name)}<small>${esc(s.amc)} · ${esc(s.cat)}</small></li>`).join('') : '<li class="muted">No matching scheme</li>';
+  ul.style.display = 'block';
+  ul.querySelectorAll('li[data-i]').forEach(li => li.onclick = () => choose(+li.dataset.i));
+});
+$('#q').addEventListener('keydown', e => {
+  const lis = $('#acList').querySelectorAll('li[data-i]');
+  if (e.key === 'ArrowDown') { acIdx = Math.min(lis.length - 1, acIdx + 1); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { acIdx = Math.max(0, acIdx - 1); e.preventDefault(); }
+  else if (e.key === 'Enter') { if (acIdx >= 0) choose(acIdx); else if (acItems.length) choose(0); else if (pick) analyse(); e.preventDefault(); return; }
+  lis.forEach((li, i) => li.classList.toggle('act', i === acIdx));
+});
+document.addEventListener('click', e => { if (!e.target.closest('.ac')) $('#acList').style.display = 'none'; });
+function choose(i) { pick = acItems[i]; $('#q').value = pick.name; $('#acList').style.display = 'none'; analyse(); }
+$('#go').onclick = () => { if (!pick && acItems.length) pick = acItems[0]; if (pick) analyse(); else $('#ddOut').innerHTML = '<div class="card section err">Search and select a scheme first.</div>'; };
+
+async function analyse() {
+  if (!pick) return;
+  const out = $('#ddOut');
+  out.innerHTML = `<div class="card section skel">Analysing ${esc(pick.name)}… (fetching full NAV history)</div>`;
+  const qs = new URLSearchParams({ code: pick.code, rf: $('#rf').value || '6.5' }); if ($('#bench').value) qs.set('bench', $('#bench').value);
+  try {
+    const d = await getJSON('/api/fund?' + qs);
+    const sel = $('#bench'); if (sel.options.length <= 1) d.benchmarks.forEach(b => sel.insertAdjacentHTML('beforeend', `<option value="${b.key}">${esc(b.label)}</option>`));
+    history.replaceState(null, '', '?fund=' + d.fund.code + '#dd');
+    renderDD(d);
+  } catch (e) { out.innerHTML = `<div class="card section err">${esc(e.message)}</div>`; }
+}
+
+const QUAL = {
+  'People': ['Lead manager tenure 3+ years on this fund', 'No recent key departures; analyst team stable', 'Manager invests own money in the fund (skin in the game)', 'Incentives tied to long-term performance, not AUM'],
+  'Philosophy': ['Clear, credible edge that is explained consistently', 'Philosophy unchanged through good and bad periods'],
+  'Process': ['Holdings match the stated style (no style drift)', 'Defined sell discipline and position-size limits', 'AUM within strategy capacity (no bloat)'],
+  'Operations (ODD)': ['Independent custodian and registrar', 'Reputable auditor; clean regulatory record', 'Clear valuation policy for illiquid holdings', 'Expense ratio reasonable for the category']
+};
+
+function renderDD(d) {
+  const R = d.risk, F = d.fund, B = d.benchmark;
+  const vIcon = d.verdict === 'Retain' ? ['green', '✓'] : d.verdict === 'Watchlist' ? ['amber', '!'] : ['red', '✕'];
+  const key = 'qual-' + F.code; const qs = store.get(key, {});
+  const metric = (l, v, help) => `<div class="metric" title="${esc(help || '')}"><span>${l}</span><b>${v}</b></div>`;
+  const qualHtml = Object.entries(QUAL).map(([g, items]) => `<div class="chk"><h3>${g}</h3>${items.map((it, i) => { const id = g + i; return `<label><input type="checkbox" data-id="${esc(id)}" ${qs[id] ? 'checked' : ''}> <span>${esc(it)}</span></label>`; }).join('')}</div>`).join('');
+  $('#ddOut').innerHTML = `
+  <div class="card section">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div><h2 style="font-size:18px">${esc(F.name)}</h2><p class="sub" style="margin:2px 0">${esc(F.house)} · ${esc(F.category)} · NAV ₹${F.nav.toFixed(2)} as of ${dstr(F.asOf)} · history since ${dstr(F.from)}</p>
+      <p class="sub" style="margin:0">Benchmark: <b>${esc(B.label)}</b> <span class="muted">(proxy: ${esc(B.proxy)})</span> · Analysis window: last ${d.windowYears} years · Risk-free ${(d.rf * 100).toFixed(1)}%</p></div>
+      <div style="text-align:right"><div class="note">Quantitative screen</div><span class="verdict"><span class="ic ${vIcon[0]}">${vIcon[1]}</span>${esc(d.verdict)}</span></div>
+    </div>
+  </div>
+  <div class="grid g2 section">
+    <div class="card"><h2>Due-diligence flags</h2><p class="sub">Rule-based checks. Each flag carries an icon and a label, not colour alone.</p>
+      ${d.flags.map(f => `<div class="flag"><span class="ic ${f.level}">${f.level === 'green' ? '✓' : f.level === 'amber' ? '!' : '✕'}</span><div><b>${esc(f.area)}</b> <span class="muted">· ${f.level === 'green' ? 'Pass' : f.level === 'amber' ? 'Caution' : 'Fail'}</span><br>${esc(f.text)}</div></div>`).join('')}
+    </div>
+    <div class="card"><h2>Risk &amp; return (last ${d.windowYears} years)</h2><p class="sub">Fund vs benchmark on aligned daily NAVs.</p>
+      <div class="grid" style="gap:0 24px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
+        <div>
+          ${metric('CAGR · fund / bench', `${pct(R.cagrFund)} / ${pct(R.cagrBench)}`)}
+          ${metric('Volatility · fund / bench', `${pctu(R.volFund)} / ${pctu(R.volBench)}`)}
+          ${metric('Sharpe · fund / bench', `${num(R.sharpeFund)} / ${num(R.sharpeBench)}`, 'Excess return per unit of total risk')}
+          ${metric('Sortino', num(R.sortinoFund), 'Excess return per unit of downside risk')}
+          ${metric('Max drawdown · fund / bench', `${pct(R.mddFund)} / ${pct(R.mddBench)}`)}
+          ${metric('Max drawdown since inception', pct(R.mddSinceInception))}
+        </div>
+        <div>
+          ${metric('Beta', num(R.beta), 'Sensitivity to benchmark moves')}
+          ${metric("Jensen's alpha (annual)", pct(R.alpha), 'Return above what beta alone explains')}
+          ${metric('Tracking error', pctu(R.trackingError), 'How far the fund strays from its benchmark')}
+          ${metric('Information ratio', num(R.infoRatio), 'Alpha per unit of active risk')}
+          ${metric('Up / down capture', `${pctu(R.upCapture, 0)} / ${pctu(R.downCapture, 0)}`, 'Monthly, geometric')}
+          ${metric('Monthly batting average', `${pctu(R.battingAvg, 0)} of ${R.months} months`)}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="grid g2 section">
+    <div class="card"><h2>Growth of ₹100 (last ${d.windowYears} years)</h2><div class="legend" id="gLeg"></div><div class="chart" id="gChart"></div></div>
+    <div class="card"><h2>Rolling ${d.rollYears}-year returns</h2>
+      <p class="sub">${d.rollStats ? `Fund beat the benchmark in <b>${pctu(d.rollStats.beatRate, 0)}</b> of ${d.rollStats.windows} rolling windows · average excess ${pct(d.rollStats.avgExcess)} a year · fund range ${pct(d.rollStats.fundMin)} to ${pct(d.rollStats.fundMax)} (median ${pct(d.rollStats.fundMedian)})` : 'Not enough history for rolling windows.'}</p>
+      <div class="legend" id="rLeg"></div><div class="chart" id="rChart"></div></div>
+  </div>
+  <div class="grid g2 section">
+    <div class="card"><h2>Trailing returns</h2>
+      <table><thead><tr><th>Period</th><th>Fund</th><th>Benchmark</th><th>Difference</th></tr></thead><tbody>${d.trailing.map(t => `<tr style="cursor:default"><td>${t.label}</td><td>${pct(t.fund)}</td><td>${pct(t.bench)}</td><td class="${cls(t.fund - t.bench)}">${t.fund === null || t.bench === null ? '–' : pct(t.fund - t.bench)}</td></tr>`).join('')}</tbody></table>
+      <h2 class="section">Calendar-year returns</h2>
+      <table><thead><tr><th>Year</th><th>Fund</th><th>Benchmark</th><th>Difference</th></tr></thead><tbody>${d.calendar.map(c => `<tr style="cursor:default"><td>${c.year}</td><td>${pct(c.fund)}</td><td>${pct(c.bench)}</td><td class="${cls(c.fund - c.bench)}">${pct(c.fund - c.bench)}</td></tr>`).join('')}</tbody></table>
+    </div>
+    <div class="card"><h2>Qualitative review: the 4 Ps and operations</h2><p class="sub">Data can't answer these. Check them from the fund's factsheet, offer document, manager interviews and the AMC's disclosures. Ticks are saved in this browser.</p>
+      <div id="qual">${qualHtml}</div>
+      <label class="f section">Analyst notes<textarea id="qNotes" placeholder="e.g. Co-manager left in March; AUM tripled in 18 months; check capacity…">${esc(qs.notes || '')}</textarea></label>
+      <div class="row" style="margin-top:10px"><button class="ghost" id="memo">Copy review memo</button><span class="note" id="memoMsg"></span></div>
+    </div>
+  </div>`;
+  const gs = [{ name: 'Fund', color: css('--s1'), pts: d.growth.fund }, { name: 'Benchmark', color: css('--s2'), pts: d.growth.bench }];
+  legend($('#gLeg'), gs); lineChart($('#gChart'), { series: gs, baseline: 100, label: 'Growth of 100', height: 240 });
+  if (d.rolling.length) {
+    const rs = [{ name: 'Fund', color: css('--s1'), pts: d.rolling.map(r => [r[0], r[1] * 100]) }, { name: 'Benchmark', color: css('--s2'), pts: d.rolling.map(r => [r[0], r[2] * 100]) }];
+    legend($('#rLeg'), rs); lineChart($('#rChart'), { series: rs, baseline: 0, zero: false, label: 'Rolling returns', yFmt: v => v.toFixed(0) + '%', height: 240 });
+  }
+  const saveQ = () => { const o = {}; document.querySelectorAll('#qual input').forEach(i => o[i.dataset.id] = i.checked); o.notes = $('#qNotes').value; store.set(key, o); };
+  document.querySelectorAll('#qual input').forEach(i => i.onchange = saveQ); $('#qNotes').oninput = saveQ;
+  $('#memo').onclick = async () => {
+    saveQ();
+    const ticked = [], open = [];
+    Object.entries(QUAL).forEach(([g, items]) => items.forEach((it, i) => (store.get(key, {})[g + i] ? ticked : open).push(`${g}: ${it}`)));
+    const txt = `FUND REVIEW MEMO: ${F.name}\nAMC: ${F.house} | Category: ${F.category} | Benchmark: ${B.label}\nData: AMFI NAVs to ${dstr(F.asOf)} | Window: ${d.windowYears}y | Rf ${(d.rf * 100).toFixed(1)}%\n\nQUANTITATIVE SCREEN: ${d.verdict.toUpperCase()}\n${d.flags.map(f => `- [${f.level === 'green' ? 'PASS' : f.level === 'amber' ? 'CAUTION' : 'FAIL'}] ${f.area}: ${f.text}`).join('\n')}\n\nKEY METRICS\n- CAGR ${pct(R.cagrFund)} vs ${pct(R.cagrBench)} | Vol ${pctu(R.volFund)} vs ${pctu(R.volBench)}\n- Sharpe ${num(R.sharpeFund)} vs ${num(R.sharpeBench)} | IR ${num(R.infoRatio)} | TE ${pctu(R.trackingError)} | Beta ${num(R.beta)}\n- Up/Down capture ${pctu(R.upCapture, 0)} / ${pctu(R.downCapture, 0)} | Max DD ${pct(R.mddFund)} vs ${pct(R.mddBench)}\n${d.rollStats ? `- Rolling ${d.rollYears}Y beat rate ${pctu(d.rollStats.beatRate, 0)} (${d.rollStats.windows} windows)\n` : ''}\nQUALITATIVE (4 Ps + ODD)\nConfirmed:\n${ticked.map(x => '- ' + x).join('\n') || '- none yet'}\nOpen items:\n${open.map(x => '- ' + x).join('\n') || '- none'}\n\nAnalyst notes:\n${$('#qNotes').value || '-'}\n`;
+    try { await navigator.clipboard.writeText(txt); $('#memoMsg').textContent = 'Memo copied to clipboard.'; } catch (e) { $('#memoMsg').textContent = 'Copy failed.'; }
+  };
+}
+
+// deep link to tab
+if (location.hash === '#dd') document.querySelector('#nav button[data-t="dd"]').click();
+loadPulse();
+</script>
+<script src="/brief.js"></script>
+</body>
+</html>
