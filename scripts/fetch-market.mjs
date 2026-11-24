@@ -107,7 +107,7 @@ async function get(url, { tries = 3, timeout = 20000, text = false } = {}) {
       const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(timeout) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return text ? await r.text() : await r.json();
-    } catch (e) { last = e; await sleep(1500 * (i + 1)); }
+    } catch (e) { last = e; if (i === tries - 1) console.log(`  ! ${url.slice(0, 90)} -> ${e.name}: ${e.message}${e.cause ? ' (' + (e.cause.code || e.cause.message) + ')' : ''}`); await sleep(1500 * (i + 1)); }
   }
   throw last;
 }
