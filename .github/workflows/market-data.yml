@@ -1,0 +1,47 @@
+name: Market data refresh
+
+on:
+  schedule:
+    - cron: '35 22 * * 1-5'   # weekdays, after the US close
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/market-data.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Load previous data (fallback if a source fails)
+        run: |
+          git fetch --depth=1 origin data && git show origin/data:market.json > prev.json || echo '{}' > prev.json
+
+      - name: Fetch, validate and build market data
+        run: node scripts/fetch-market.mjs prev.json out/market.json
+
+      - name: Publish to the data branch
+        run: |
+          cd out
+          echo '{"git":{"deploymentEnabled":false}}' > vercel.json
+          git init -q -b data
+          git config user.name "Deepankar"
+          git config user.email "dee27pankar-hash08@users.noreply.github.com"
+          git add market.json vercel.json
+          git commit -qm "Market data $(date -u +%F)"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" data
